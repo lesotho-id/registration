@@ -670,7 +670,7 @@ public class SyncRegistrationServiceImpl implements SyncRegistrationService<Sync
 			regAdditionalInfo.setName(dto.getName());
 			regAdditionalInfo.setEmail(dto.getEmail());
 			regAdditionalInfo.setPhone(dto.getPhone());
-			
+			regAdditionalInfo.setWhatsappNumber(dto.getWhatsappNumber());
 			String additionalInfo = JsonUtils.javaObjectToJsonString(regAdditionalInfo);
 			byte[] encryptedInfo = encryptor.encrypt(additionalInfo, referenceId, timeStamp);
 			syncRegistrationEntity.setOptionalValues(encryptedInfo);
