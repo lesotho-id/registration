@@ -39,6 +39,12 @@ public class SyncRegistrationDto implements Serializable {
 	/** The phone. */
 	private String phone;
 
+	private String whatsappNumber;
+
+	public String getWhatsappNumber() {
+		return whatsappNumber;
+	}
+
 	/** The sync type dto. */
 	private String registrationType = SyncTypeDto.NEW.getValue();
 
