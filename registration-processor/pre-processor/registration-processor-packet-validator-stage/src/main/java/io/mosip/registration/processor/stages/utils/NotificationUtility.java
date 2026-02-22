@@ -66,29 +66,19 @@ import io.mosip.registration.processor.status.entity.SyncRegistrationEntity;
 @Component
 public class NotificationUtility {
 
-	/**
-	 * The reg proc logger.
-	 */
+	/** The reg proc logger. */
 	private static Logger regProcLogger = RegProcessorLogger.getLogger(NotificationUtility.class);
 
-	/**
-	 * The Constant BOTH.
-	 */
+	/** The Constant BOTH. */
 	public static final String BOTH = "BOTH";
 
-	/**
-	 * The Constant LINE_SEPARATOR.
-	 */
+	/** The Constant LINE_SEPARATOR. */
 	public static final String LINE_SEPARATOR = "" + '\n' + '\n' + '\n';
 
-	/**
-	 * The Constant FILE_SEPARATOR.
-	 */
+	/** The Constant FILE_SEPARATOR. */
 	public static final String FILE_SEPARATOR = File.separator;
 
-	/**
-	 * The Constant ENCODING.
-	 */
+	/** The Constant ENCODING. */
 	public static final String ENCODING = "UTF-8";
 
 	@Autowired
@@ -96,9 +86,7 @@ public class NotificationUtility {
 
 	String registrationId = null;
 
-	/**
-	 * The primary language.
-	 */
+	/** The primary language. */
 	@Value("${mosip.default.template-languages:#{null}}")
 	private String defaultTemplateLanguages;
 
@@ -107,61 +95,53 @@ public class NotificationUtility {
 
 	@Value("${mosip.default.user-preferred-language-attribute:#{null}}")
 	private String userPreferredLanguageAttribute;
-	/**
-	 * The env.
-	 */
+	/** The env. */
 	@Autowired
 	private Environment env;
 
-	/**
-	 * The template generator.
-	 */
+	/** The template generator. */
 	@Autowired
 	private TemplateGenerator templateGenerator;
 
 	@Autowired
 	private LanguageUtility languageUtility;
 
-	/**
-	 * The resclient.
-	 */
+	/** The resclient. */
 	@Autowired
 	private RestApiClient resclient;
 
 	@Autowired
 	private PriorityBasedPacketManagerService packetManagerService;
 
-	/**
-	 * The utility.
-	 */
+	/** The utility. */
 	@Autowired
 	private Utilities utility;
 
 	private static final String SMS_SERVICE_ID = "mosip.registration.processor.sms.id";
 	private static final String REG_PROC_APPLICATION_VERSION = "mosip.registration.processor.application.version";
 	private static final String DATETIME_PATTERN = "mosip.registration.processor.datetime.pattern";
-	private static final String NOTIFICATION_TEMPLATE_CODE = "regproc.packet.validator.notification.template.code.";
-	private static final String EMAIL = "email";
-	private static final String SMS = "sms";
-	private static final String WHATSAPP = "whatsapp";
-	private static final String SUB = "sub";
-	private static final String NEW_REG = NOTIFICATION_TEMPLATE_CODE + "new.reg.";
-	private static final String LOST_UIN = NOTIFICATION_TEMPLATE_CODE + "lost.uin.";
-	private static final String REPRINT_UIN = NOTIFICATION_TEMPLATE_CODE + "reprint.uin.";
-	private static final String ACTIVATE = NOTIFICATION_TEMPLATE_CODE + "activate.";
-	private static final String DEACTIVATE = NOTIFICATION_TEMPLATE_CODE + "deactivate.";
-	private static final String UIN_UPDATE = NOTIFICATION_TEMPLATE_CODE + "uin.update.";
-	private static final String RES_UPDATE = NOTIFICATION_TEMPLATE_CODE + "resident.update.";
-	private static final String TECHNICAL_ISSUE = NOTIFICATION_TEMPLATE_CODE + "technical.issue.";
-	private static final String SUP_REJECT = NOTIFICATION_TEMPLATE_CODE + "supervisor.reject.";
+	private static final String NOTIFICATION_TEMPLATE_CODE="regproc.packet.validator.notification.template.code.";
+	private static final String EMAIL="email";
+	private static final String SMS="sms";
+	private static final String SUB="sub";
+	private static final String NEW_REG=NOTIFICATION_TEMPLATE_CODE+"new.reg.";
+	private static final String LOST_UIN=NOTIFICATION_TEMPLATE_CODE+"lost.uin.";
+	private static final String REPRINT_UIN=NOTIFICATION_TEMPLATE_CODE+"reprint.uin.";
+	private static final String ACTIVATE=NOTIFICATION_TEMPLATE_CODE+"activate.";
+	private static final String DEACTIVATE=NOTIFICATION_TEMPLATE_CODE+"deactivate.";
+	private static final String UIN_UPDATE=NOTIFICATION_TEMPLATE_CODE+"uin.update.";
+	private static final String RES_UPDATE=NOTIFICATION_TEMPLATE_CODE+"resident.update.";
+	private static final String TECHNICAL_ISSUE=NOTIFICATION_TEMPLATE_CODE+"technical.issue.";
+	private static final String SUP_REJECT=NOTIFICATION_TEMPLATE_CODE+"supervisor.reject.";
+
 
 
 	@Autowired
 	private ObjectMapper mapper;
 
 	public void sendNotification(RegistrationAdditionalInfoDTO registrationAdditionalInfoDTO,
-								 InternalRegistrationStatusDto registrationStatusDto, SyncRegistrationEntity regEntity,
-								 String[] allNotificationTypes, boolean isProcessingSuccess, boolean isValidSupervisorStatus)
+			InternalRegistrationStatusDto registrationStatusDto, SyncRegistrationEntity regEntity,
+			String[] allNotificationTypes, boolean isProcessingSuccess,boolean isValidSupervisorStatus)
 			throws ApisResourceAccessException, IOException, PacketManagerException, JsonProcessingException, JSONException {
 		registrationId = regEntity.getRegistrationId();
 		LogDescription description = new LogDescription();
@@ -170,50 +150,46 @@ public class NotificationUtility {
 		NotificationTemplateType type = null;
 		Map<String, Object> attributes = new HashMap<>();
 		attributes.put("RID", registrationId);
-		List<String> preferredLanguages = getPreferredLanguages(registrationStatusDto);
+		List<String> preferredLanguages=getPreferredLanguages(registrationStatusDto);
 		JSONObject regProcessorIdentityJson = utility.getRegistrationProcessorMappingJson(MappingJsonConstants.IDENTITY);
-		String nameField = JsonUtil.getJSONValue(
-				JsonUtil.getJSONObject(regProcessorIdentityJson, MappingJsonConstants.NAME),
-				MappingJsonConstants.VALUE);
+        String nameField = JsonUtil.getJSONValue(
+                JsonUtil.getJSONObject(regProcessorIdentityJson, MappingJsonConstants.NAME),
+                MappingJsonConstants.VALUE);
 		String[] nameArray = nameField.toString().split(",");
-		for (String preferredLanguage : preferredLanguages) {
-			if (registrationAdditionalInfoDTO.getName() != null) {
-				attributes.put(nameArray[0] + "_" + preferredLanguage, registrationAdditionalInfoDTO.getName());
-			} else {
-				attributes.put(nameArray[0] + "_" + preferredLanguage, "");
+		for(String preferredLanguage:preferredLanguages) {
+		if (registrationAdditionalInfoDTO.getName() != null) {
+			attributes.put(nameArray[0] + "_" + preferredLanguage, registrationAdditionalInfoDTO.getName());
+		} else {
+			attributes.put(nameArray[0] + "_" + preferredLanguage, "");
+		}
+		if (nameArray.length > 1) {
+			for (int i = 1; i < nameArray.length; i++) {
+				attributes.put(nameArray[i] + "_" + preferredLanguage, "");
 			}
-			if (nameArray.length > 1) {
-				for (int i = 1; i < nameArray.length; i++) {
-					attributes.put(nameArray[i] + "_" + preferredLanguage, "");
-				}
-			}
-			if (isProcessingSuccess) {
-				type = setNotificationTemplateType(registrationStatusDto, type);
-			} else if (!isValidSupervisorStatus) {
-				type = NotificationTemplateType.SUP_REJECT;
-			} else {
-				type = NotificationTemplateType.TECHNICAL_ISSUE;
-			}
-			if (type != null) {
-				setTemplateAndSubject(type, regType, messageSenderDTO);
-			}
+		}
+		if (isProcessingSuccess) {
+			type = setNotificationTemplateType(registrationStatusDto, type);
+		} else if (!isValidSupervisorStatus) {
+			type = NotificationTemplateType.SUP_REJECT;
+		} else {
+			type = NotificationTemplateType.TECHNICAL_ISSUE;
+		}
+		if (type != null) {
+			setTemplateAndSubject(type, regType, messageSenderDTO);
+		}
 
-			if (allNotificationTypes != null) {
-				for (String notificationType : allNotificationTypes) {
-					if (notificationType.equalsIgnoreCase("EMAIL")
-							&& (registrationAdditionalInfoDTO.getEmail() != null
-							&& !registrationAdditionalInfoDTO.getEmail().isEmpty())) {
-						sendEmailNotification(registrationAdditionalInfoDTO, messageSenderDTO, attributes, description, preferredLanguage);
-					} else if (notificationType.equalsIgnoreCase("SMS") && (registrationAdditionalInfoDTO.getPhone() != null
-							&& !registrationAdditionalInfoDTO.getPhone().isEmpty())) {
-						sendSMSNotification(registrationAdditionalInfoDTO, messageSenderDTO, attributes, description, preferredLanguage);
-					} else if (notificationType.equalsIgnoreCase("WHATSAPP")
-							&& registrationAdditionalInfoDTO.getPhone() != null) {
-						sendWhatsAppNotification(registrationAdditionalInfoDTO, messageSenderDTO,
-								attributes, description, preferredLanguage);
-					}
+		if (allNotificationTypes != null) {
+			for (String notificationType : allNotificationTypes) {
+				if (notificationType.equalsIgnoreCase("EMAIL")
+						&& (registrationAdditionalInfoDTO.getEmail() != null
+						&& !registrationAdditionalInfoDTO.getEmail().isEmpty())) {
+					sendEmailNotification(registrationAdditionalInfoDTO, messageSenderDTO, attributes, description,preferredLanguage);
+				} else if (notificationType.equalsIgnoreCase("SMS") && (registrationAdditionalInfoDTO.getPhone() != null
+						&& !registrationAdditionalInfoDTO.getPhone().isEmpty())) {
+					sendSMSNotification(registrationAdditionalInfoDTO, messageSenderDTO, attributes, description,preferredLanguage);
 				}
 			}
+		}
 		}
 	}
 
@@ -346,47 +322,6 @@ public class NotificationUtility {
 			throw new ApisResourceAccessException(PlatformErrorMessages.RPR_PGS_API_RESOURCE_NOT_AVAILABLE.name(), e);
 		}
 		return response;
-	}
-	private void sendWhatsAppNotification(RegistrationAdditionalInfoDTO registrationAdditionalInfoDTO,
-										  MessageSenderDTO messageSenderDTO, Map<String, Object> attributes, LogDescription description, String preferredLanguage) {
-		try {
-			InputStream in = templateGenerator.getTemplate(messageSenderDTO.getSmsTemplateCode(), attributes, preferredLanguage);
-			String message = IOUtils.toString(in, ENCODING);
-			ResponseDto response = sendWhatsApp(registrationAdditionalInfoDTO.getWhatsappNumber(), message);
-			if ("success".equalsIgnoreCase(response.getStatus())) {
-				description.setCode(PlatformSuccessMessages.RPR_MESSAGE_SENDER_STAGE_SUCCESS.getCode());
-				description.setMessage("WhatsApp notification sent successfully");
-			} else {
-				description.setCode(PlatformErrorMessages.RPR_MESSAGE_SENDER_SMS_FAILED.getCode());
-				description.setMessage("WhatsApp notification failed");
-			}
-		} catch (Exception e) {
-			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
-					LoggerFileConstant.REGISTRATIONID.toString(),
-					registrationId,
-					"WhatsApp notification failed " + ExceptionUtils.getStackTrace(e));
-		}
-	}
-	private ResponseDto sendWhatsApp(String whatsappNumber, String message) throws Exception {
-
-		regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
-				"WhatsApp Number before API call: [" + whatsappNumber + "]");
-
-		LinkedMultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
-		params.add("recipient", whatsappNumber);
-		params.add("message", message);
-		params.add("file", null);
-
-		String apiHost = env.getProperty(ApiName.WHATSAPPNOTIFIER.name());
-
-		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), "",
-				"NotificationUtility::sendWhatsApp():: WHATSAPPNOTIFIER POST service started");
-		ResponseWrapper<?> responseWrapper = (ResponseWrapper<?>) resclient.postApi(apiHost, MediaType.MULTIPART_FORM_DATA, params, ResponseWrapper.class);
-
-		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), "",
-				"NotificationUtility::sendWhatsApp():: WHATSAPPNOTIFIER POST service ended");
-
-		return mapper.convertValue(responseWrapper.getResponse(), ResponseDto.class);
 	}
 
 	private void sendEmailNotification(RegistrationAdditionalInfoDTO registrationAdditionalInfoDTO,
