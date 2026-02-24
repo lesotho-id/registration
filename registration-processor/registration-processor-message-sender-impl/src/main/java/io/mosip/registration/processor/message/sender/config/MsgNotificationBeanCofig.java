@@ -1,5 +1,6 @@
 package io.mosip.registration.processor.message.sender.config;
 
+import io.mosip.registration.processor.core.notification.template.generator.dto.WhatsAppResponseDto;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,7 +18,7 @@ import io.mosip.registration.processor.packet.manager.decryptor.DecryptorImpl;
 public class MsgNotificationBeanCofig {
 
 	@Bean
-	public MessageNotificationService<SmsResponseDto, ResponseDto, MultipartFile[]> getMessageNotificationService() {
+	public MessageNotificationService<SmsResponseDto, ResponseDto, MultipartFile[], WhatsAppResponseDto> getMessageNotificationService() {
 		return new MessageNotificationServiceImpl();
 	}
 	
