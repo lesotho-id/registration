@@ -179,6 +179,7 @@ public class NotificationUtility {
 		}
 
 		if (allNotificationTypes != null) {
+			System.out.println("allNotificationTypes: " + allNotificationTypes);
 			for (String notificationType : allNotificationTypes) {
 				if (notificationType.equalsIgnoreCase("EMAIL")
 						&& (registrationAdditionalInfoDTO.getEmail() != null
