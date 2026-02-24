@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.mosip.registration.processor.core.notification.template.generator.dto.*;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,10 +34,6 @@ import io.mosip.kernel.websub.api.verifier.AuthenticatedContentVerifier;
 import io.mosip.registration.processor.core.code.ApiName;
 import io.mosip.registration.processor.core.exception.ApisResourceAccessException;
 import io.mosip.registration.processor.core.http.ResponseWrapper;
-import io.mosip.registration.processor.core.notification.template.generator.dto.ResponseDto;
-import io.mosip.registration.processor.core.notification.template.generator.dto.SmsResponseDto;
-import io.mosip.registration.processor.core.notification.template.generator.dto.TemplateDto;
-import io.mosip.registration.processor.core.notification.template.generator.dto.TemplateResponseDto;
 import io.mosip.registration.processor.core.packet.dto.Identity;
 import io.mosip.registration.processor.core.spi.message.sender.MessageNotificationService;
 import io.mosip.registration.processor.core.spi.restclient.RegistrationProcessorRestClientService;
@@ -54,7 +51,7 @@ import io.mosip.registration.processor.rest.client.audit.builder.AuditLogRequest
 public class NotificationServiceTest {
 
 	@Mock
-	private MessageNotificationService<SmsResponseDto, ResponseDto, MultipartFile[]> service;
+	private MessageNotificationService<SmsResponseDto, ResponseDto, MultipartFile[], WhatsAppResponseDto> service;
 
 	@Mock
 	private ObjectMapper mapper;
