@@ -179,7 +179,7 @@ public class NotificationUtility {
 		}
 
 		if (allNotificationTypes != null) {
-			System.out.println("allNotificationTypes: " + allNotificationTypes);
+			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(), registrationId, "allNotificationTypes: "+ java.util.Arrays.toString(allNotificationTypes));
 			for (String notificationType : allNotificationTypes) {
 				if (notificationType.equalsIgnoreCase("EMAIL")
 						&& (registrationAdditionalInfoDTO.getEmail() != null
