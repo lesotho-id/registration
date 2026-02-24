@@ -763,13 +763,20 @@ public class MessageNotificationServiceImpl
 			String phone = JsonUtil.getJSONValue(
 					JsonUtil.getJSONObject(regProcessorIdentityJson, MappingJsonConstants.PHONE),
 					MappingJsonConstants.VALUE);
+			String whatsapp = JsonUtil.getJSONValue(
+					JsonUtil.getJSONObject(regProcessorIdentityJson, MappingJsonConstants.WHATSAPPNUMBER),
+					MappingJsonConstants.VALUE);
 			String emailValue = fieldMap.get(email);
 			String phoneNumberValue = fieldMap.get(phone);
+			String whatsappValue = fieldMap.get(whatsapp);
 			if (emailValue != null) {
 				emailId.append(emailValue);
 			}
 			if (phoneNumberValue != null) {
 				phoneNumber.append(phoneNumberValue);
+			}
+			if (whatsappValue != null) {
+				whatsappNumber.append(whatsappValue);
 			}
 			}
 			else {
