@@ -316,6 +316,7 @@ public class NotificationServiceImpl implements NotificationService {
 			LogDescription description) throws Exception {
 		boolean isNotificationSuccess = false;
 		boolean isSMSSuccess = false, isEmailSuccess = false;
+		boolean isWhatsappSuccess = false;
 		// if notification is set as none then dont send notification
 		if (allNotificationTypes != null && allNotificationTypes.length == 1
 				&& allNotificationTypes[0].equalsIgnoreCase(NotificationTypeEnum.NONE.name())) {
@@ -335,6 +336,9 @@ public class NotificationServiceImpl implements NotificationService {
 						&& isTemplateAvailable(messageSenderDto)) {
 					isEmailSuccess = sendEmail(id, process, attributes, ccEMailList, regType, messageSenderDto,
 							description);
+				} else if (notificationType.equalsIgnoreCase(NotificationTypeEnum.WHATSAPP.name())) {
+					isWhatsappSuccess = sendWhatsapp(id, process, attributes, regType,
+							messageSenderDto, description);
 				} else {
 					throw new TemplateNotFoundException(MessageSenderStatusMessage.TEMPLATE_NOT_FOUND);
 				}
