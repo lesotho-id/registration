@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import io.mosip.registration.processor.core.notification.template.generator.dto.WhatsAppResponseDto;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
@@ -96,7 +97,7 @@ import io.mosip.registration.processor.status.service.SyncRegistrationService;
  */
 @Service
 public class MessageNotificationServiceImpl
-		implements MessageNotificationService<SmsResponseDto, ResponseDto, MultipartFile[]> {
+		implements MessageNotificationService<SmsResponseDto, ResponseDto, MultipartFile[], WhatsAppResponseDto> {
 
     /** The Constant BOTH. */
     public static final String BOTH = "BOTH";
@@ -195,8 +196,9 @@ public class MessageNotificationServiceImpl
 			for(String lang: preferredLanguages) {
 				StringBuilder emailId = new StringBuilder();
 				StringBuilder phoneNumber = new StringBuilder();
+				StringBuilder whatsappNumber = new StringBuilder();
 				Map<String, Object> attributesLang=new HashMap<>(attributes);
-				setAttributes(id, process,lang, idType, attributesLang, regType, phoneNumber, emailId);
+				setAttributes(id, process,lang, idType, attributesLang, regType, phoneNumber, emailId,whatsappNumber);
 				InputStream stream = templateGenerator.getTemplate(templateTypeCode, attributesLang, lang);
 				if(artifact.isBlank()) {
 				 artifact = IOUtils.toString(stream, ENCODING);
@@ -274,8 +276,9 @@ public class MessageNotificationServiceImpl
 			for(String lang: preferredLanguages) {
 				StringBuilder emailId = new StringBuilder();
 				StringBuilder phoneNumber = new StringBuilder();
+				StringBuilder whatsappNumber = new StringBuilder();
 				Map<String, Object> attributesLang=new HashMap<>(attributes);
-				setAttributes(id, process,lang, idType, attributesLang, regType, phoneNumber, emailId);
+				setAttributes(id, process,lang, idType, attributesLang, regType, phoneNumber, emailId,whatsappNumber);
 				InputStream stream = templateGenerator.getTemplate(templateTypeCode, attributesLang, lang);
 
 				artifact = IOUtils.toString(stream, ENCODING);
@@ -423,6 +426,76 @@ public class MessageNotificationServiceImpl
 		return responseDto;
 	}
 
+	@Override
+	public WhatsAppResponseDto sendWhatsappNotification(String templateTypeCode, String id, String process, IdType idType, Map<String, Object> attributes, MultipartFile[] attachment, String regType) throws Exception {
+
+		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), id,
+				"MessageNotificationServiceImpl::sendWhatsappNotification()::entry");
+
+		List<String> preferredLanguages = getPreferredLanguages(id, process);
+
+		StringBuilder whatsappNumber = new StringBuilder();
+		StringBuilder phoneNumber = new StringBuilder();
+		StringBuilder emailId = new StringBuilder();
+		String artifact = "";
+
+		for (String lang : preferredLanguages) {
+			Map<String, Object> attributesLang = new HashMap<>(attributes);
+			setAttributes(id, process, lang, idType, attributesLang, regType, phoneNumber, emailId, whatsappNumber);
+
+			InputStream stream =
+					templateGenerator.getTemplate(templateTypeCode, attributesLang, lang);
+
+			if (artifact.isBlank()) {
+				artifact = IOUtils.toString(stream, ENCODING);
+			} else {
+				artifact = artifact + LINE_SEPARATOR + IOUtils.toString(stream, ENCODING);
+			}
+		}
+
+		if (whatsappNumber.length() == 0) {
+			System.out.println("invalid number");
+			/*throw new PhoneNumberNotFoundException(
+					PlatformErrorMessages.RPR_WHATSAPP_NUMBER_NOT_FOUND.getCode());*/
+		}
+		WhatsAppResponseDto response = sendWhatsapp(whatsappNumber.toString(), artifact, attachment);
+
+		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), id,
+				"MessageNotificationServiceImpl::sendWhatsappNotification()::exit");
+
+		return response;
+	}
+
+
+	private WhatsAppResponseDto sendWhatsapp(String whatsappNumber, String message, MultipartFile[] attachment) throws Exception {
+
+		if (whatsappNumber == null || message == null) {
+			regProcLogger.info("WhatsApp not triggered – missing data");
+			return null;
+		}
+
+		LinkedMultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
+		ResponseWrapper<?> responseWrapper;
+		WhatsAppResponseDto responseDto;
+
+		String apiHost = env.getProperty(ApiName.WHATSAPPNOTIFIER.name());
+		UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(apiHost);
+
+		params.add("recipient", whatsappNumber);
+		params.add("message", message);
+		params.add("file", null);
+
+		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), "", "sendWhatsapp :: POST started");
+
+		responseWrapper = (ResponseWrapper<?>) resclient.postApi(builder.build().toUriString(), MediaType.MULTIPART_FORM_DATA, params, ResponseWrapper.class);
+
+		responseDto = mapper.readValue(mapper.writeValueAsString(responseWrapper.getResponse()), WhatsAppResponseDto.class);
+
+		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), "", "sendWhatsapp :: POST ended with response : " + JsonUtil.objectMapperObjectToJson(responseDto));
+
+		return responseDto;
+	}
+
 	/**
 	 * Gets the template json.
 	 *
@@ -444,7 +517,7 @@ public class MessageNotificationServiceImpl
 	 * @throws IdRepoAppException
 	 */
 	private Map<String, Object> setAttributes(String id, String process, String lang, IdType idType, Map<String, Object> attributes, String regType,
-			StringBuilder phoneNumber, StringBuilder emailId) throws IOException, ApisResourceAccessException,
+			StringBuilder phoneNumber, StringBuilder emailId,StringBuilder whatsappNumber) throws IOException, ApisResourceAccessException,
 			JsonProcessingException, PacketManagerException, JSONException, PacketDecryptionFailureException, JsonParseException, JsonMappingException, io.mosip.kernel.core.exception.IOException {
 
 		String uin = "";
@@ -465,9 +538,9 @@ public class MessageNotificationServiceImpl
 				|| regType.equalsIgnoreCase(RegistrationType.UPDATE.name())
 				|| regType.equalsIgnoreCase(RegistrationType.RES_UPDATE.name())
 				|| regType.equalsIgnoreCase(RegistrationType.LOST.name()))) {
-			setAttributesFromIdRepo(uin, attributes, regType,lang, phoneNumber, emailId);
+			setAttributesFromIdRepo(uin, attributes, regType,lang, phoneNumber, emailId,whatsappNumber);
 		} else {
-			setAttributesFromIdJson(id, process, attributes, regType,lang, phoneNumber, emailId);
+			setAttributesFromIdJson(id, process, attributes, regType,lang, phoneNumber, emailId,whatsappNumber);
 		}
 
 		return attributes;
@@ -489,7 +562,7 @@ public class MessageNotificationServiceImpl
 	 */
 	@SuppressWarnings("rawtypes")
 	private Map<String, Object> setAttributesFromIdRepo(String uin, Map<String, Object> attributes, String regType,
-			String lang,StringBuilder phoneNumber, StringBuilder emailId) throws IOException {
+			String lang,StringBuilder phoneNumber, StringBuilder emailId,StringBuilder whatsappNumber) throws IOException {
 		List<String> pathsegments = new ArrayList<>();
 		pathsegments.add(uin);
 		IdResponseDTO response;
@@ -510,7 +583,7 @@ public class MessageNotificationServiceImpl
 			}
 
 			String jsonString = new JSONObject((Map) response.getResponse().getIdentity()).toString();
-			setAttributes(jsonString, attributes, regType,lang, phoneNumber, emailId);
+			setAttributes(jsonString, attributes, regType,lang, phoneNumber, emailId,whatsappNumber);
 
 		} catch (ApisResourceAccessException e) {
 			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(),
@@ -538,7 +611,7 @@ public class MessageNotificationServiceImpl
 	 */
 	@SuppressWarnings("unchecked")
 	private Map<String, Object> setAttributes(String idJsonString, Map<String, Object> attribute, String regType,
-			String lang, StringBuilder phoneNumber, StringBuilder emailId) throws IOException {
+			String lang, StringBuilder phoneNumber, StringBuilder emailId,StringBuilder whatsappNumber) throws IOException {
 		JSONObject demographicIdentity = null;
 			demographicIdentity = JsonUtil.objectMapperReadValue(idJsonString, JSONObject.class);
 
@@ -573,7 +646,7 @@ public class MessageNotificationServiceImpl
 			}
 		}
 
-		setEmailAndPhone(demographicIdentity, phoneNumber, emailId);
+		setEmailAndPhone(demographicIdentity, phoneNumber,emailId,whatsappNumber);
 
 		return attribute;
 	}
@@ -586,7 +659,7 @@ public class MessageNotificationServiceImpl
 	 * @throws IOException
 	 *             Signals that an I/O exception has occurred.
 	 */
-	private void setEmailAndPhone(JSONObject demographicIdentity, StringBuilder phoneNumber, StringBuilder emailId)
+	/*private void setEmailAndPhone(JSONObject demographicIdentity, StringBuilder phoneNumber, StringBuilder emailId)
 			throws IOException {
 
 		JSONObject regProcessorIdentityJson = utility.getRegistrationProcessorMappingJson(MappingJsonConstants.IDENTITY);
@@ -602,11 +675,36 @@ public class MessageNotificationServiceImpl
 			phoneNumber.append(phoneNumberValue);
 		}
 
+	}*/
+
+	private void setEmailAndPhone(JSONObject demographicIdentity, StringBuilder phoneNumber, StringBuilder emailId, StringBuilder whatsappNumber) throws IOException {
+
+		JSONObject regProcessorIdentityJson = utility.getRegistrationProcessorMappingJson(MappingJsonConstants.IDENTITY);
+
+		String email = JsonUtil.getJSONValue(JsonUtil.getJSONObject(regProcessorIdentityJson, MappingJsonConstants.EMAIL), MappingJsonConstants.VALUE);
+
+		String phone = JsonUtil.getJSONValue(JsonUtil.getJSONObject(regProcessorIdentityJson, MappingJsonConstants.PHONE), MappingJsonConstants.VALUE);
+
+		String whatsapp = JsonUtil.getJSONValue(JsonUtil.getJSONObject(regProcessorIdentityJson ,MappingJsonConstants.WHATSAPPNUMBER), MappingJsonConstants.VALUE);
+
+		String emailValue = JsonUtil.getJSONValue(demographicIdentity, email);
+		String phoneValue = JsonUtil.getJSONValue(demographicIdentity, phone);
+		String whatsappValue = JsonUtil.getJSONValue(demographicIdentity, whatsapp);
+
+		if (emailValue != null) {
+			emailId.append(emailValue);
+		}
+		if (phoneValue != null) {
+			phoneNumber.append(phoneValue);
+		}
+		if (whatsappValue != null) {
+			whatsappNumber.append(whatsappValue);
+		}
 	}
 
 	@SuppressWarnings("unchecked")
 	private Map<String, Object> setAttributesFromIdJson(String id, String process, Map<String, Object> attribute,
-			String regType, String lang, StringBuilder phoneNumber, StringBuilder emailId)
+			String regType, String lang, StringBuilder phoneNumber, StringBuilder emailId,StringBuilder whatsappNumber)
 			throws IOException, ApisResourceAccessException, PacketManagerException, JsonProcessingException, JSONException, PacketDecryptionFailureException, JsonParseException, JsonMappingException, io.mosip.kernel.core.exception.IOException {
 
 		if (mapperJsonKeys == null) {
@@ -675,13 +773,13 @@ public class MessageNotificationServiceImpl
 			}
 			}
 			else {
-				attribute=setAttributesFromSync(id, process, attribute, regType, lang, phoneNumber, emailId);
+				attribute=setAttributesFromSync(id, process, attribute, regType, lang, phoneNumber, emailId,whatsappNumber);
 			}
 			return attribute;
 		}
 
 		private Map<String, Object> setAttributesFromSync(String id, String process, Map<String, Object> attribute,
-				String regType, String lang, StringBuilder phoneNumber, StringBuilder emailId) throws PacketDecryptionFailureException, ApisResourceAccessException, IOException, JsonParseException, JsonMappingException, io.mosip.kernel.core.exception.IOException {
+				String regType, String lang, StringBuilder phoneNumber, StringBuilder emailId,StringBuilder whatsappNumber) throws PacketDecryptionFailureException, ApisResourceAccessException, IOException, JsonParseException, JsonMappingException, io.mosip.kernel.core.exception.IOException {
 			SyncRegistrationEntity regEntity = syncRegistrationService.findByRegistrationId(id).get(0);
 			if (regEntity.getOptionalValues() != null) {
 				InputStream inputStream = new ByteArrayInputStream(regEntity.getOptionalValues());
@@ -702,6 +800,9 @@ public class MessageNotificationServiceImpl
 				}
 				if (registrationAdditionalInfoDTO.getPhone() != null) {
 					phoneNumber.append(registrationAdditionalInfoDTO.getPhone());
+				}
+				if (registrationAdditionalInfoDTO.getWhatsappNumber() != null) {
+					whatsappNumber.append(registrationAdditionalInfoDTO.getWhatsappNumber());
 				}
 			}
 			return attribute;

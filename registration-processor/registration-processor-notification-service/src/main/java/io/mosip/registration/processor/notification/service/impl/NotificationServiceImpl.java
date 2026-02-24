@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.mosip.registration.processor.core.notification.template.generator.dto.WhatsAppResponseDto;
 import org.json.JSONException;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -136,7 +137,7 @@ public class NotificationServiceImpl implements NotificationService {
 
 	/** The service. */
 	@Autowired
-	private MessageNotificationService<SmsResponseDto, ResponseDto, MultipartFile[]> service;
+	private MessageNotificationService<SmsResponseDto, ResponseDto, MultipartFile[],WhatsAppResponseDto> service;
 	
 	@Autowired
 	private SubscriptionClient<SubscriptionChangeRequest,UnsubscriptionRequest, SubscriptionChangeResponse> sb;
@@ -441,6 +442,23 @@ public class NotificationServiceImpl implements NotificationService {
 		return isSmsSuccess;
 	}
 
+	private boolean sendWhatsapp(String id, String process,
+								 Map<String, Object> attributes,
+								 String regType,
+								 MessageSenderDto messageSenderDto,
+								 LogDescription description) throws Exception {
+		WhatsAppResponseDto response = service.sendWhatsappNotification(messageSenderDto.getSmsTemplateCode(),id, process, messageSenderDto.getIdType(), attributes, null, regType);
+
+		if (response != null && "success".equalsIgnoreCase(response.getStatus())) {
+			description.setStatusComment("WhatsApp notification sent successfully");
+			description.setSubStatusCode(StatusUtil.MESSAGE_SENDER_NOTIF_SUCC.getCode());
+			return true;
+		}
+		description.setStatusComment("WhatsApp notification failed");
+		description.setSubStatusCode(StatusUtil.MESSAGE_SENDER_NOTIFICATION_FAILED.getCode());
+		return false;
+	}
+
 	/**
 	 * Sets the template and subject.
 	 *
@@ -627,5 +645,4 @@ public class NotificationServiceImpl implements NotificationService {
 		messageSenderDto.setIdType(IdType.RID);
 
 	}
-
 }
