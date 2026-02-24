@@ -179,7 +179,6 @@ public class NotificationUtility {
 		}
 
 		if (allNotificationTypes != null) {
-			regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(), registrationId, "allNotificationTypes: "+ java.util.Arrays.toString(allNotificationTypes));
 			for (String notificationType : allNotificationTypes) {
 				if (notificationType.equalsIgnoreCase("EMAIL")
 						&& (registrationAdditionalInfoDTO.getEmail() != null
@@ -189,7 +188,7 @@ public class NotificationUtility {
 						&& !registrationAdditionalInfoDTO.getPhone().isEmpty())) {
 					sendSMSNotification(registrationAdditionalInfoDTO, messageSenderDTO, attributes, description,preferredLanguage);
 				} else if (notificationType.equalsIgnoreCase("WHATSAPP")
-						&& registrationAdditionalInfoDTO.getPhone() != null) {
+						&& registrationAdditionalInfoDTO.getWhatsappNumber() != null) {
 					sendWhatsAppNotification(registrationAdditionalInfoDTO, messageSenderDTO,
 							attributes, description, preferredLanguage);
 				}
