@@ -2,6 +2,7 @@ package io.mosip.registration.processor.status.api.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import io.mosip.kernel.core.util.DateUtils;
 import io.mosip.registration.processor.core.constant.ResponseStatusCode;
 import io.mosip.registration.processor.core.exception.util.PlatformErrorMessages;
@@ -150,6 +151,11 @@ public class RegistrationSyncController {
 			List<SyncResponseDto> syncResponseList = new ArrayList<>();
 			RegistrationSyncRequestDTO registrationSyncRequestDTO = syncRegistrationService
 					.decryptAndGetSyncRequest(encryptedSyncMetaInfo, referenceId, timeStamp, syncResponseList);
+
+			ObjectMapper mapper = new ObjectMapper();
+			mapper.enable(SerializationFeature.INDENT_OUTPUT);
+			String json = mapper.writeValueAsString(registrationSyncRequestDTO);
+			System.out.println("Decrypted RegistrationSyncRequestDTO:"+ json);
 
 			if (registrationSyncRequestDTO != null && validator.validate(registrationSyncRequestDTO,
 					env.getProperty(REG_SYNC_SERVICE_ID), syncResponseList)) {
