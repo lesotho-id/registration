@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.mosip.registration.processor.core.notification.template.generator.dto.WhatsAppResponseDto;
 import io.mosip.registration.processor.packet.storage.utils.Utilities;
 import org.json.JSONException;
 import org.json.simple.parser.ParseException;
@@ -142,7 +143,7 @@ public class NotificationServiceImpl implements NotificationService {
 
 	/** The service. */
 	@Autowired
-	private MessageNotificationService<SmsResponseDto, ResponseDto, MultipartFile[]> service;
+	private MessageNotificationService<SmsResponseDto, ResponseDto, MultipartFile[], WhatsAppResponseDto> service;
 	
 	@Autowired
 	private SubscriptionClient<SubscriptionChangeRequest,UnsubscriptionRequest, SubscriptionChangeResponse> sb;
@@ -324,6 +325,7 @@ public class NotificationServiceImpl implements NotificationService {
 			LogDescription description) throws Exception {
 		boolean isNotificationSuccess = false;
 		boolean isSMSSuccess = false, isEmailSuccess = false;
+		boolean isWhatsappSuccess = false;
 		// if notification is set as none then dont send notification
 		if (allNotificationTypes != null && allNotificationTypes.length == 1
 				&& allNotificationTypes[0].equalsIgnoreCase(NotificationTypeEnum.NONE.name())) {
@@ -343,6 +345,9 @@ public class NotificationServiceImpl implements NotificationService {
 						&& isTemplateAvailable(messageSenderDto)) {
 					isEmailSuccess = sendEmail(id, process, attributes, ccEMailList, regType, messageSenderDto,
 							description);
+				} else if (notificationType.equalsIgnoreCase(NotificationTypeEnum.WHATSAPP.name())) {
+					isWhatsappSuccess = sendWhatsapp(id, process, attributes, regType,
+							messageSenderDto, description);
 				} else {
 					throw new TemplateNotFoundException(MessageSenderStatusMessage.TEMPLATE_NOT_FOUND);
 				}
@@ -450,6 +455,23 @@ public class NotificationServiceImpl implements NotificationService {
 		return isSmsSuccess;
 	}
 
+	private boolean sendWhatsapp(String id, String process,
+								 Map<String, Object> attributes,
+								 String regType,
+								 MessageSenderDto messageSenderDto,
+								 LogDescription description) throws Exception {
+		WhatsAppResponseDto response = service.sendWhatsappNotification(messageSenderDto.getSmsTemplateCode(),id, process, messageSenderDto.getIdType(), attributes, null, regType);
+
+		if (response != null && "success".equalsIgnoreCase(response.getStatus())) {
+			description.setStatusComment("WhatsApp notification sent successfully");
+			description.setSubStatusCode(StatusUtil.MESSAGE_SENDER_NOTIF_SUCC.getCode());
+			return true;
+		}
+		description.setStatusComment("WhatsApp notification failed");
+		description.setSubStatusCode(StatusUtil.MESSAGE_SENDER_NOTIFICATION_FAILED.getCode());
+		return false;
+	}
+
 	/**
 	 * Sets the template and subject.
 	 *
@@ -495,7 +517,7 @@ public class NotificationServiceImpl implements NotificationService {
 				messageSenderDto.setSmsTemplateCode(env.getProperty(UIN_UPDATE+SMS));
 				messageSenderDto.setEmailTemplateCode(env.getProperty(UIN_UPDATE+EMAIL));
 				messageSenderDto.setIdType(IdType.UIN);
-				messageSenderDto.setSubjectCode(env.getProperty(UIN_UPDATE+SMS));
+				messageSenderDto.setSubjectCode(env.getProperty(UIN_UPDATE+SUB));
 			}
 			break;
 		case DUPLICATE_UIN:
