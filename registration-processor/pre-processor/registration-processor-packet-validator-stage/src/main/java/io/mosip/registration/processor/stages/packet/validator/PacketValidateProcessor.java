@@ -601,6 +601,7 @@ public class PacketValidateProcessor {
 						utility.getRefId(registrationId, regEntity.getReferenceId()),
 						inputStream);
 				String decryptedData = IOUtils.toString(decryptedInputStream, StandardCharsets.UTF_8);
+				System.out.println("all decrypted data: " + decryptedData);
 				RegistrationAdditionalInfoDTO registrationAdditionalInfoDTO = (RegistrationAdditionalInfoDTO) JsonUtils
 						.jsonStringToJavaObject(RegistrationAdditionalInfoDTO.class, decryptedData);
 				if (isTransactionSuccessful) {

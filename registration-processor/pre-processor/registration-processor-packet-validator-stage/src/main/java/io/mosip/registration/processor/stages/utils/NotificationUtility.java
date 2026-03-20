@@ -191,6 +191,8 @@ public class NotificationUtility {
 				} else if (notificationType.equalsIgnoreCase("SMS") && (registrationAdditionalInfoDTO.getPhone() != null
 						&& !registrationAdditionalInfoDTO.getPhone().isEmpty())) {
 					sendSMSNotification(registrationAdditionalInfoDTO, messageSenderDTO, attributes, description,preferredLanguage);
+				} else if (notificationType.equalsIgnoreCase("WHATSAPP") && registrationAdditionalInfoDTO.getWhatsappNumber() != null) {
+					sendWhatsAppNotification(registrationAdditionalInfoDTO, messageSenderDTO, attributes, description, preferredLanguage);
 				}
 			}
 		}
@@ -328,6 +330,47 @@ public class NotificationUtility {
 		return response;
 	}
 
+	private void sendWhatsAppNotification(RegistrationAdditionalInfoDTO registrationAdditionalInfoDTO,
+										  MessageSenderDTO messageSenderDTO, Map<String, Object> attributes, LogDescription description, String preferredLanguage) {
+		try {
+			InputStream in = templateGenerator.getTemplate(messageSenderDTO.getSmsTemplateCode(), attributes, preferredLanguage);
+			String message = IOUtils.toString(in, ENCODING);
+			ResponseDto response = sendWhatsApp(registrationAdditionalInfoDTO.getWhatsappNumber(), message);
+			if ("success".equalsIgnoreCase(response.getStatus())) {
+				description.setCode(PlatformSuccessMessages.RPR_MESSAGE_SENDER_STAGE_SUCCESS.getCode());
+				description.setMessage("WhatsApp notification sent successfully");
+			} else {
+				description.setCode(PlatformErrorMessages.RPR_MESSAGE_SENDER_SMS_FAILED.getCode());
+				description.setMessage("WhatsApp notification failed");
+			}
+		} catch (Exception e) {
+			regProcLogger.error(LoggerFileConstant.SESSIONID.toString(),
+					LoggerFileConstant.REGISTRATIONID.toString(),
+					registrationId,
+					"WhatsApp notification failed " + ExceptionUtils.getStackTrace(e));
+		}
+	}
+	private ResponseDto sendWhatsApp(String whatsappNumber, String message) throws Exception {
+
+		regProcLogger.info(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.REGISTRATIONID.toString(), registrationId,
+				"WhatsApp Number before API call: [" + whatsappNumber + "]");
+
+		LinkedMultiValueMap<String, Object> params = new LinkedMultiValueMap<>();
+		params.add("recipient", whatsappNumber);
+		params.add("message", message);
+		params.add("files", null);
+
+		String apiHost = env.getProperty(ApiName.WHATSAPPNOTIFIER.name());
+
+		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), "",
+				"NotificationUtility::sendWhatsApp():: WHATSAPPNOTIFIER POST service started");
+		ResponseWrapper<?> responseWrapper = (ResponseWrapper<?>) resclient.postApi(apiHost, MediaType.MULTIPART_FORM_DATA, params, ResponseWrapper.class);
+
+		regProcLogger.debug(LoggerFileConstant.SESSIONID.toString(), LoggerFileConstant.USERID.toString(), "",
+				"NotificationUtility::sendWhatsApp():: WHATSAPPNOTIFIER POST service ended");
+
+		return mapper.convertValue(responseWrapper.getResponse(), ResponseDto.class);
+	}
 	private void sendEmailNotification(RegistrationAdditionalInfoDTO registrationAdditionalInfoDTO,
 			MessageSenderDTO messageSenderDTO, Map<String, Object> attributes, LogDescription description,String preferedLanguage) {
 		try {
