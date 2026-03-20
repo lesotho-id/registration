@@ -17,6 +17,7 @@ import java.util.Map;
 import io.mosip.registration.processor.core.constant.VidType;
 import io.mosip.registration.processor.core.idrepo.dto.VidInfoDTO;
 import io.mosip.registration.processor.core.idrepo.dto.VidsInfosDTO;
+import io.mosip.registration.processor.core.notification.template.generator.dto.WhatsAppResponseDto;
 import io.mosip.registration.processor.packet.storage.utils.PacketManagerService;
 import org.apache.commons.io.IOUtils;
 import org.assertj.core.util.Lists;
@@ -86,7 +87,7 @@ public class MessageNotificationServiceImplTest {
 
 	/** The message notification service impl. */
 	@InjectMocks
-	private MessageNotificationService<SmsResponseDto, ResponseDto, MultipartFile[]> messageNotificationServiceImpl = new MessageNotificationServiceImpl();
+	private MessageNotificationService<SmsResponseDto, ResponseDto, MultipartFile[], WhatsAppResponseDto> messageNotificationServiceImpl = new MessageNotificationServiceImpl();
 
 	@Mock
 	private IdRepoService idRepoService;

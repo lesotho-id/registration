@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import io.mosip.registration.processor.core.notification.template.generator.dto.WhatsAppResponseDto;
 import org.json.JSONException;
 import org.json.simple.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -145,7 +146,7 @@ public class MessageSenderStage extends MosipVerticleAPIManager {
 
 	/** The service. */
 	@Autowired
-	private MessageNotificationService<SmsResponseDto, ResponseDto, MultipartFile[]> service;
+	private MessageNotificationService<SmsResponseDto, ResponseDto, MultipartFile[], WhatsAppResponseDto> service;
 
 	@Autowired
 	private TransactionService<TransactionDto> transactionStatusService;
