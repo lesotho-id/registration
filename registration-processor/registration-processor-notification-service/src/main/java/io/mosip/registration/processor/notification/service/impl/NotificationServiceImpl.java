@@ -336,8 +336,8 @@ public class NotificationServiceImpl implements NotificationService {
 			description.setSubStatusCode(StatusUtil.MESSAGE_SENDER_NOT_CONFIGURED.getCode());
 			return isNotificationSuccess;
 		}
-		if (allNotificationTypes != null) {
 			for (String notificationType : allNotificationTypes) {
+			try {
 				if (notificationType.equalsIgnoreCase(NotificationTypeEnum.SMS.name())
 						&& isTemplateAvailable(messageSenderDto)) {
 					isSMSSuccess = sendSms(id, process, attributes, regType, messageSenderDto, description);
@@ -348,11 +348,11 @@ public class NotificationServiceImpl implements NotificationService {
 				} else if (notificationType.equalsIgnoreCase(NotificationTypeEnum.WHATSAPP.name())) {
 					isWhatsappSuccess = sendWhatsapp(id, process, attributes, regType,
 							messageSenderDto, description);
-				} else {
-					throw new TemplateNotFoundException(MessageSenderStatusMessage.TEMPLATE_NOT_FOUND);
+				}
+			}catch (Exception e) {
+					regProcLogger.error("Notification failed for type: " + notificationType + " error: " + e.getMessage());
 				}
 			}
-		}
 
 		if (isEmailSuccess && isSMSSuccess) {
 			isNotificationSuccess = true;
@@ -460,6 +460,7 @@ public class NotificationServiceImpl implements NotificationService {
 								 String regType,
 								 MessageSenderDto messageSenderDto,
 								 LogDescription description) throws Exception {
+		try {
 		WhatsAppResponseDto response = service.sendWhatsappNotification(messageSenderDto.getSmsTemplateCode(),id, process, messageSenderDto.getIdType(), attributes, null, regType);
 
 		if (response != null && "success".equalsIgnoreCase(response.getStatus())) {
@@ -467,8 +468,11 @@ public class NotificationServiceImpl implements NotificationService {
 			description.setSubStatusCode(StatusUtil.MESSAGE_SENDER_NOTIF_SUCC.getCode());
 			return true;
 		}
-		description.setStatusComment("WhatsApp notification failed");
-		description.setSubStatusCode(StatusUtil.MESSAGE_SENDER_NOTIFICATION_FAILED.getCode());
+		} catch (PhoneNumberNotFoundException e) {
+			regProcLogger.warn("WhatsApp number not found, skipping...");
+		} catch (Exception e) {
+			regProcLogger.error("WhatsApp failed: " + e.getMessage());
+		}
 		return false;
 	}
 
