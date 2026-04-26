@@ -256,6 +256,16 @@ public class UinGeneratorStage extends MosipVerticleAPIManager {
 
 				loadDemographicIdentity(fieldMap, demographicIdentity);
 
+				Map<String, String> tags = object.getTags();
+
+				if (tags != null && tags.containsKey("is_phone_verified")) {
+					String isPhoneVerified = tags.get("is_phone_verified");
+
+					if (isPhoneVerified != null) {
+						demographicIdentity.put("is_phone_verified", String.valueOf(isPhoneVerified));
+					}
+				}
+
 				if (StringUtils.isEmpty(uinField) || uinField.equalsIgnoreCase("null") ) {
 
 					idResponseDTO = sendIdRepoWithUin(registrationId, registrationStatusDto.getRegistrationType(), demographicIdentity,
