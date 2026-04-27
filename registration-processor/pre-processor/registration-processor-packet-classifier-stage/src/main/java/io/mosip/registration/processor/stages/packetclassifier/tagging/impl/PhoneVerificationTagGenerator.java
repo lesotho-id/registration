@@ -57,6 +57,12 @@ public class PhoneVerificationTagGenerator implements TagGenerator {
             List<String> paramNames = Arrays.asList("idNumber", "phone", "isCitizen");
             List<Object> paramValues = Arrays.asList(idNumber, phone, isCitizen);
 
+            LOGGER.info("PHONE_VERIFY_REQUEST -> API: {}, Params: idNumber={}, phone={}, isCitizen={}",
+                    ApiName.MOBILE_VERIFIER_API,
+                    idNumber,
+                    phone,
+                    isCitizen);
+
             Object response = restClientService.getApi(ApiName.MOBILE_VERIFIER_API, null,paramNames,
                     paramValues,
                     String.class
