@@ -638,6 +638,7 @@ public class BioDedupeProcessor {
 		List<String> mapperJsonKeys = new ArrayList<>(mapperIdentity.keySet());
 
 		for (String key : mapperJsonKeys) {
+			if(BioDedupeConstants.SELECTED_HANDLES.equalsIgnoreCase(key)) continue;
 			JSONObject jsonValue = JsonUtil.getJSONObject(mapperIdentity, key);
 			Object jsonObject = JsonUtil.getJSONValue(demographicJsonIdentity,
 					(String) jsonValue.get(BioDedupeConstants.VALUE));
